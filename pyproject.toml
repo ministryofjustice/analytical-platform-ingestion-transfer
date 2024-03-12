@@ -1,0 +1,7 @@
+[tool.pylint.'MESSAGES CONTROL']
+max-line-length = 120
+disable = """
+    import-error,
+    missing-function-docstring,
+    missing-module-docstring
+"""
