@@ -1,11 +1,10 @@
 import os
-from datetime import datetime
-
 import boto3
 from botocore.exceptions import ClientError
 
 s3_client = boto3.client("s3")
 sm_client = boto3.client("secretsmanager")
+
 
 def handler(event, context):
     object_key = event["Records"][0]["s3"]["object"]["key"]
@@ -29,8 +28,8 @@ def handler(event, context):
         return
 
     # attempting to wrap this is try/except failed to delete
-    s3_client.delete_object(
-        Bucket=os.environ["PROCESSED_BUCKET_NAME"], Key=object_key
+    s3_client.delete_object(Bucket=os.environ["PROCESSED_BUCKET_NAME"], Key=object_key)
+    print(
+        f"Successfully deleted {object_key} from {os.environ['PROCESSED_BUCKET_NAME']}"
     )
-    print(f"Successfully deleted {object_key} from {os.environ['PROCESSED_BUCKET_NAME']}")
     print("handler.py completed successfully!")
