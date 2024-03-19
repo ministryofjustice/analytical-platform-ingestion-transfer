@@ -1,13 +1,13 @@
 ---
     name: Build and Test
-    
+
     on:
       pull_request:
         branches:
           - main
-    
+
     permissions: {}
-    
+
     jobs:
       build-and-test:
         name: Build and Test
@@ -18,10 +18,9 @@
           - name: Checkout
             id: checkout
             uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-    
+
           - name: Build and Test
             id: build_and_test
             shell: bash
             run: |
               bash scripts/build-and-test.sh
-    

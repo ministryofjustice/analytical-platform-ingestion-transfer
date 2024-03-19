@@ -1,6 +1,6 @@
 ---
     name: Super-Linter
-    
+  
     on:
       pull_request:
         branches:
@@ -10,9 +10,9 @@
           - opened
           - reopened
           - synchronize
-    
+
     permissions: {}
-    
+
     jobs:
       super-linter:
         name: Super-Linter
@@ -26,7 +26,7 @@
             uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
             with:
               fetch-depth: 0
-    
+
           - name: Run Super-Linter
             id: super_linter
             uses: super-linter/super-linter/slim@e0fc164bba85f4b58c6cd17ba1dfd435d01e8a06 # v6.3.0
@@ -34,4 +34,3 @@
               GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               LINTER_RULES_PATH: /
               PYTHON_PYLINT_CONFIG_FILE: pyproject.toml
-    
