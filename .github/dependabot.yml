@@ -18,3 +18,7 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    groups:
+      boto:
+        patterns:
+          - "boto*"
