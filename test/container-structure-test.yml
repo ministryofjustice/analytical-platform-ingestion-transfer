@@ -1,0 +1,15 @@
+---
+schemaVersion: 2.0.0
+
+commandTests:
+  - name: "pip"
+    command: "pip"
+    args: ["--version"]
+    expectedOutput: ["pip 24.0"]
+
+fileExistenceTests:
+  - name: "handler.py"
+    path: "/var/task/handler.py"
+
+  - name: "requirements.txt"
+    path: "/var/task/requirements.txt"
