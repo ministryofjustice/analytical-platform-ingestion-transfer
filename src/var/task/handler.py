@@ -7,7 +7,7 @@ s3_client = boto3.client("s3")
 sm_client = boto3.client("secretsmanager")
 
 
-def handler(event):
+def handler(event, context):  # pylint: disable=unused-argument
     object_key = event["Records"][0]["s3"]["object"]["key"]
     supplier, file_name = object_key.split("/")[:2]
     print(f"Supplier: {supplier}")
