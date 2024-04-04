@@ -1,10 +1,13 @@
 import os
+from datetime import datetime
 
 import boto3
 from botocore.exceptions import ClientError
 
 s3_client = boto3.client("s3")
 sm_client = boto3.client("secretsmanager")
+sns_client = boto3.client("sns")
+timestamp = datetime.now().isoformat()
 
 
 def handler(event, context):  # pylint: disable=unused-argument
@@ -24,6 +27,11 @@ def handler(event, context):  # pylint: disable=unused-argument
             Bucket=target_bucket_name, CopySource=copy_source, Key=object_key
         )
         print(f"Successfully copied {object_key} to {target_bucket_name}")
+        sns_client.publish(
+            TopicArn=os.environ["SNS_TOPIC_ARN"],
+            Message=f"transferred,${supplier}/${file_name},${timestamp}",
+        )
+
     except ClientError as e:
         print(f"Error copying object: {e}")
         return
