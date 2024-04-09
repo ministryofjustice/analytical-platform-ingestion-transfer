@@ -29,7 +29,7 @@ def handler(event, context):  # pylint: disable=unused-argument
         print(f"Successfully copied {object_key} to {target_bucket_name}")
         sns_client.publish(
             TopicArn=os.environ["SNS_TOPIC_ARN"],
-            Message=f"transferred,${supplier}/${file_name},${timestamp}",
+            Message=f"transferred,{supplier}/{file_name},{timestamp}",
         )
 
     except ClientError as e:
