@@ -8,6 +8,7 @@ s3_client = boto3.client("s3")
 sm_client = boto3.client("secretsmanager")
 sns_client = boto3.client("sns")
 timestamp = datetime.now().isoformat()
+timestamp_epoch = int(datetime.now().timestamp())
 
 
 def handler(event, context):  # pylint: disable=unused-argument
@@ -30,6 +31,11 @@ def handler(event, context):  # pylint: disable=unused-argument
         destination_object_key = f"{bucket_prefix}/{file_name}"
     else:
         destination_object_key = object_key
+
+    if supplier in ["essex-police"]:
+        destination_object_key = (
+            f"{bucket_prefix}/file_land_timestamp={timestamp_epoch}/{file_name}"
+        )
 
     copy_source = {"Bucket": os.environ["PROCESSED_BUCKET_NAME"], "Key": object_key}
 
