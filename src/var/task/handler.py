@@ -16,17 +16,25 @@ def handler(event, context):  # pylint: disable=unused-argument
     print(f"Supplier: {supplier}")
     print(f"File name: {file_name}")
 
-    target_bucket_name = sm_client.get_secret_value(
+    target_bucket = sm_client.get_secret_value(
         SecretId=f"ingestion/sftp/{supplier}/target-bucket"
     )["SecretString"]
+
+    if "/" in target_bucket:
+        target_bucket, bucket_prefix = target_bucket.split("/", 1)
+        destination_object_key = f"{bucket_prefix}/{object_key}"
+    else:
+        destination_object_key = object_key
 
     copy_source = {"Bucket": os.environ["PROCESSED_BUCKET_NAME"], "Key": object_key}
 
     try:
         s3_client.copy_object(
-            Bucket=target_bucket_name, CopySource=copy_source, Key=object_key
+            Bucket=target_bucket, CopySource=copy_source, Key=destination_object_key
         )
-        print(f"Successfully copied {object_key} to {target_bucket_name}")
+        print(
+            f"Successfully copied {object_key} to {target_bucket}/${destination_object_key}"
+        )
         sns_client.publish(
             TopicArn=os.environ["SNS_TOPIC_ARN"],
             Message=f"transferred,{supplier}/{file_name},{timestamp}",
