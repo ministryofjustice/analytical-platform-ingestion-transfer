@@ -44,7 +44,7 @@ def handler(event, context):  # pylint: disable=unused-argument
             Bucket=target_bucket, CopySource=copy_source, Key=destination_object_key
         )
         print(
-            f"Successfully copied {object_key} to {target_bucket}/${destination_object_key}"
+            f"Successfully copied {object_key} to {target_bucket}/{destination_object_key}"
         )
         sns_client.publish(
             TopicArn=os.environ["SNS_TOPIC_ARN"],
