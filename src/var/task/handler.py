@@ -12,9 +12,14 @@ timestamp = datetime.now().isoformat()
 
 def handler(event, context):  # pylint: disable=unused-argument
     object_key = event["Records"][0]["s3"]["object"]["key"]
-    supplier, file_name = object_key.split("/")[:2]
+    supplier, uploaded_object = object_key.split("/", 1)
     print(f"Supplier: {supplier}")
-    print(f"File name: {file_name}")
+    print(f"Object: {uploaded_object}")
+
+    if "/" in uploaded_object:
+        file_name = uploaded_object.split("/")[-1]
+    else:
+        file_name = uploaded_object
 
     target_bucket = sm_client.get_secret_value(
         SecretId=f"ingestion/sftp/{supplier}/target-bucket"
@@ -22,7 +27,7 @@ def handler(event, context):  # pylint: disable=unused-argument
 
     if "/" in target_bucket:
         target_bucket, bucket_prefix = target_bucket.split("/", 1)
-        destination_object_key = f"{bucket_prefix}/{object_key}"
+        destination_object_key = f"{bucket_prefix}/{file_name}"
     else:
         destination_object_key = object_key
 
