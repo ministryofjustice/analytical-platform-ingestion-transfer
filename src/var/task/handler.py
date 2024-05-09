@@ -48,7 +48,7 @@ def handler(event, context):  # pylint: disable=unused-argument
         )
         sns_client.publish(
             TopicArn=os.environ["SNS_TOPIC_ARN"],
-            Message=f"transferred,{supplier}/{file_name},{timestamp}",
+            Message=f"transferred,{supplier}/{destination_object_key},{timestamp}",
         )
 
     except ClientError as e:
