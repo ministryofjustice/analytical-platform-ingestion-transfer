@@ -41,7 +41,7 @@ def handler(event, context):  # pylint: disable=unused-argument
 
     try:
         s3_client.copy_object(
-            Bucket=target_bucket, CopySource=copy_source, Key=destination_object_key
+            Bucket=target_bucket, CopySource=copy_source, Key=destination_object_key, ACL='bucket-owner-full-control'
         )
         print(
             f"Successfully copied {object_key} to {target_bucket}/{destination_object_key}"
