@@ -7,7 +7,7 @@
         "version": "3.12",
         "installTools": false
       },
-      "ghcr.io/ministryofjustice/devcontainer-feature/aws:0": {}
+      "ghcr.io/ministryofjustice/devcontainer-feature/aws:1": {}
     },
     "postCreateCommand": "bash .devcontainer/post-create.sh",
     "customizations": {
