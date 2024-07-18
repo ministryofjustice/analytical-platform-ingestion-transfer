@@ -52,6 +52,6 @@
           - name: Upload SARIF
             if: always()
             id: upload_sarif
-            uses: github/codeql-action/upload-sarif@b611370bb5703a7efb587f9d136a52ea24c5c38c # v2.2.7
+            uses: github/codeql-action/upload-sarif@4fa2a7953630fd2f3fb380f21be14ede0169dd4f # v2.2.7
             with:
               sarif_file: trivy-results.sarif
