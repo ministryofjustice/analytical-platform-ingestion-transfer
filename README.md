@@ -7,6 +7,7 @@ This image is used in the Analytical Platform Ingestion service. It is deployed 
 ## Features
 
 The image:
+
 - copies the new file in the `analytical-platform-processed` bucket to the destination bucket in another AWS account.
 - deletes the original file from `analytical-platform-processed`
 
