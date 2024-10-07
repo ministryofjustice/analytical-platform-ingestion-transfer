@@ -43,6 +43,9 @@ jobs:
         if: failure() && steps.scan_image.outcome == 'failure'
         id: scan_image_on_failure
         uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # v0.24.0
+        env:
+          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db:2
+          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db:1
         with:
           image-ref: ingestion-scan
           exit-code: 1
