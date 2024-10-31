@@ -1,4 +1,4 @@
-.PHONY: build debug run
+.PHONY: build debug
 
 IMAGE_NAME ?= analytical-platform.service.justice.gov.uk/ingestion-transfer
 IMAGE_TAG  ?= local
