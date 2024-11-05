@@ -42,4 +42,4 @@ docker image inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/lambda/p
 
 ## Maintenance
 
-This component is maintained and patched using an automated process which generates a ticket on the first of the month like the [following](https://github.com/ministryofjustice/analytical-platform/issues/5902)
+Maintenance of this component is scheduled in this [workflow](https://github.com/ministryofjustice/analytical-platform/blob/main/.github/workflows/schedule-issue-ingestion.yml), which generates a maintenance ticket as per this [example](https://github.com/ministryofjustice/analytical-platform/issues/5902).
