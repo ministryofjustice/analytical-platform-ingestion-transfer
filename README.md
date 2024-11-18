@@ -33,3 +33,7 @@ Generally Dependabot does this, but the following command will return the digest
 docker pull --platform linux/amd64 public.ecr.aws/lambda/python:3.12
 docker image inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/lambda/python:3.12
 ```
+
+## Maintenance
+
+Maintenance of this component is scheduled in this [workflow](https://github.com/ministryofjustice/analytical-platform/blob/main/.github/workflows/schedule-issue-ingestion.yml), which generates a maintenance ticket as per this [example](https://github.com/ministryofjustice/analytical-platform/issues/5902).
