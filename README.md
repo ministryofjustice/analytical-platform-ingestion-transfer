@@ -15,19 +15,13 @@ The image:
 
 ### Build
 
-```bash
-docker build --platform linux/amd64 --file Dockerfile --tag analytical-platform.service.justice.gov.uk/ingestion-transfer:local .
-```
+`make build`
 
-### Run
+### Debug
 
-```bash
-docker run -it --rm \
-  --platform linux/amd64 \
-  --hostname ingestion-transfer \
-  --name analytical-platform-ingestion-transfer \
-  analytical-platform.service.justice.gov.uk/ingestion-transfer:local
-```
+Launch a Bash terminal in the container:
+
+`make debug`
 
 ## Versions
 
