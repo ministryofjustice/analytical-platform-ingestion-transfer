@@ -217,7 +217,7 @@ def process_threats_found_file(bucket_name, object_key, threats):
     )
 
 
-def process_access_denied(bucket_name, object_key):
+def process_access_denied(object_key):
 
     # Email Analytical Platform Team via SNS
     # TODO this should be AP_NOTIFICATION_TOPIC_ARN not NOTIFICATION_TOPIC_ARN
@@ -233,7 +233,7 @@ def process_access_denied(bucket_name, object_key):
     )
 
 
-def process_failed_scan(bucket_name, object_key):
+def process_failed_scan(object_key):
 
     # Email user via SNS
     topic_arn = os.environ.get("NOTIFICATION_TOPIC_ARN")
@@ -251,7 +251,7 @@ def process_failed_scan(bucket_name, object_key):
     )
 
 
-def process_unsupported_file(bucket_name, object_key):
+def process_unsupported_file():
 
     # Email user via SNS
     topic_arn = os.environ.get("NOTIFICATION_TOPIC_ARN")
