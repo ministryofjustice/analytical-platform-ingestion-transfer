@@ -17,7 +17,7 @@ timestamp = datetime.now().isoformat()
 timestamp_epoch = int(datetime.now().timestamp())
 
 
-def lambda_handler(event, context):
+def lambda_handler(event, context):  # pylint: disable=unused-argument
     """
     Lambda function to process GuardDuty Malware Protection scan results
 
@@ -58,71 +58,46 @@ def lambda_handler(event, context):
 
         # Process based on scan status first
         if scan_status == "COMPLETED":
-
-            # If scan completed, process based on the scan result
             if scan_result_status == "NO_THREATS_FOUND":
-
-                if "/" in object_key:
-                    supplier, uploaded_object = object_key.split("/", 1)
-                    logger.info(f"Supplier: {supplier}")
-                    logger.info(f"Object: {uploaded_object}")
-                    logger.info(f"Object_key: {object_key}")
-
-                # This section is needed to split out the file name in the case of nested folders
-                if "/" in uploaded_object:
-                    file_name = uploaded_object.split("/")[-1]
-                else:
-                    file_name = uploaded_object
-                    logger.info(f"File name: {file_name}")
-
-                target_bucket = sm_client.get_secret_value(
-                    SecretId=f"ingestion/sftp/{supplier}/target-bucket"
-                )["SecretString"]
-
-                if "/" in target_bucket:
-                    target_bucket, bucket_prefix = target_bucket.split("/", 1)
-                    destination_object_key = f"{bucket_prefix}/{file_name}"
-                else:
-                    destination_object_key = object_key
-
-                logger.info(f"bucket_prefix: {bucket_prefix}")
-
-                if supplier in ["essex-police"]:
-                    destination_object_key = (
-                        f"{bucket_prefix}/file_land_timestamp={timestamp_epoch}/{file_name}"
+                process_no_threats_found_file(bucket_name, object_key)
+                return {
+                    'statusCode': 200,
+                    'body': json.dumps(
+                        f"Successfully processed - NO THREATS FOUND in file: {object_key} in bucket: {bucket_name}"
                     )
-
-                copy_source = {"Bucket": "gary-test-123", "Key": object_key}
-
-                s3_client.copy_object(
-                    Bucket=target_bucket,
-                    CopySource=copy_source,
-                    Key=destination_object_key,
-                    ACL="bucket-owner-full-control",
-                )
-                print(
-                    f"Successfully copied {object_key} to {target_bucket}/{destination_object_key}"
-                )
-
-                # process_clean_file(bucket_name, object_key)
-
+                }
             elif scan_result_status == "THREATS_FOUND":
                 threats = scan_result_details.get('threats', [])
-                process_infected_file(bucket_name, object_key, threats)
-
+                process_threats_found_file(bucket_name, object_key, threats)
+                return {
+                    'statusCode': 200,
+                    'body': json.dumps(
+                        f"Successfully processed - THREATS FOUND in file: {object_key} in bucket: {bucket_name}"
+                    )
+                }
             else:
                 logger.warning(f"Unknown scan result status: {scan_result_status}")
-        # elif scan_status == "ACCESS_DENIED":
-        #     # Handle case when access is denied
-        #     process_access_denied(bucket_name, object_key)
-        # elif scan_status == "FAILED":
-        #     # Handle case when scan fails
-        #     process_failed_scan(bucket_name, object_key)
-        # elif scan_status == "UNSUPPORTED":
-        #     # Handle case when file type is unsupported
-        #     process_unsupported_file(bucket_name, object_key)
-        # else:
-        #     logger.warning(f"Unknown scan status: {scan_status}")
+        elif scan_status == "SKIPPED":
+            if scan_result_status == "ACCESS_DENIED":
+                process_access_denied(bucket_name, object_key)
+                return {
+                    'statusCode': 403,
+                    'body': json.dumps(f"Error: Access denied to file '{object_key}' in '{bucket_name}'."),
+                }
+            if scan_result_status == "UNSUPPORTED":
+                process_unsupported_file(bucket_name, object_key)
+                return {
+                    'statusCode': 415,
+                    'body': json.dumps(f"Error: File type is unsupported. Filename: '{object_key}'"),
+                }
+        elif scan_status == "FAILED":
+            process_failed_scan(bucket_name, object_key)
+            return {
+                'statusCode': 500,
+                'body': json.dumps(f"Error: Scan failed on file '{object_key}'."),
+            }
+        else:
+            logger.warning(f"Unknown scan status: {scan_status}")
 
         return {
             'statusCode': 200,
@@ -138,37 +113,67 @@ def lambda_handler(event, context):
             'body': json.dumps(f"Error processing event: {str(e)}")
         }
 
-def process_clean_file(bucket_name, object_key):
 
-    logger.info(f"Processing clean file: {object_key} in bucket: {bucket_name}")
+def process_no_threats_found_file(bucket_name, object_key):
 
-    # TODO: this would need to be updated to include a call to secrets manager to collect the destination bucket.
-    # TODO: Add cross account lambda permissions to allow this
-    clean_bucket = "gary-test-clean"
-    # target_bucket = sm_client.get_secret_value(
-    #     SecretId=f"ingestion/sftp/{supplier}/target-bucket"
-    # )["SecretString"]
+    logger.info(f"Processing NO_THREATS_FOUND file: {object_key} in bucket: {bucket_name}")
+
+    if "/" in object_key:
+        supplier, uploaded_object = object_key.split("/", 1)
+        logger.info(f"Supplier: {supplier}")
+        logger.info(f"Object: {uploaded_object}")
+        logger.info(f"Object_key: {object_key}")
+
+    # This section is needed to split out the file name in the case of nested folders
+    if "/" in uploaded_object:
+        file_name = uploaded_object.split("/")[-1]
+    else:
+        file_name = uploaded_object
+        logger.info(f"File name: {file_name}")
+
+    target_bucket = sm_client.get_secret_value(
+        SecretId=f"ingestion/sftp/{supplier}/target-bucket"
+    )["SecretString"]
+
+    if "/" in target_bucket:
+        target_bucket, bucket_prefix = target_bucket.split("/", 1)
+        destination_object_key = f"{bucket_prefix}/{file_name}"
+    else:
+        destination_object_key = object_key
+
+    logger.info(f"bucket_prefix: {bucket_prefix}")
+
+    if supplier in ["essex-police"]:
+        destination_object_key = (
+            f"{bucket_prefix}/file_land_timestamp={timestamp_epoch}/{file_name}"
+        )
+
+    copy_source = {"Bucket": os.environ["LANDING_BUCKET_NAME"], "Key": object_key}
 
     s3_client.copy_object(
-        CopySource={'Bucket': bucket_name, 'Key': object_key},
-        Bucket=clean_bucket,
+        Bucket=target_bucket,
+        CopySource=copy_source,
+        Key=destination_object_key,
+        ACL="bucket-owner-full-control",
+    )
+
+    print(
+        f"Successfully copied {object_key} to {target_bucket}/{destination_object_key}."
+    )
+
+    s3_client.delete_object(
+        Bucket=os.environ["LANDING_BUCKET_NAME"],
         Key=object_key
     )
 
-    s3_client.copy_object(
-            Bucket=target_bucket,
-            CopySource=copy_source,
-            Key=destination_object_key,
-            ACL="bucket-owner-full-control",
-        )
-    # s3_client.delete_object(Bucket=bucket_name, Key=object_key)
+    print(
+        f"Successfully deleted {object_key} from {os.environ['LANDING_BUCKET_NAME']}."
+    )
 
-    # Placeholder for your implementation
-    logger.info("Clean file processing completed")
 
-def process_infected_file(bucket_name, object_key, threats):
+def process_threats_found_file(bucket_name, object_key, threats):
 
-    logger.info(f"Processing infected file: {object_key} in bucket: {bucket_name}")
+    logger.info(f"Processing THREATS_FOUND - file: '{object_key}' in bucket '{bucket_name}'")
     logger.info(f"Detected threats: {json.dumps(threats)}")
 
     # Move file to Quarantine bucket, and then delete file.
@@ -180,51 +185,77 @@ def process_infected_file(bucket_name, object_key, threats):
     )
     s3_client.delete_object(Bucket=bucket_name, Key=object_key)
 
-    # Send Email to user
+    # Email user via SNS
     topic_arn = os.environ.get('NOTIFICATION_TOPIC_ARN')
-    message = f"Automated Malware Protection has detected malware in the file '{object_key}'. \n\nThis file has NOT been transferred, please contact us via Support: \nhttps://github.com/ministryofjustice/data-platform-support/issues \n\nMany thanks, Analytical Platform Team."
+    message = (
+        f"Automated Malware Protection has detected malware in the file '{object_key}'.\n\n"
+        "This file has NOT been transferred, please contact us via Support:\n"
+        "https://github.com/ministryofjustice/data-platform-support/issues\n\n"
+        "Many thanks, Analytical Platform Team."
+    )
     sns_client.publish(
         TopicArn=topic_arn,
         Subject="🚨 Malware Detection Alert",
         Message=message
     )
 
-    # Placeholder for your implementation
-    logger.info("Infected file processing completed")
+    # Email Analytical Platform Team via SNS
+    topic_arn = os.environ.get('AP_NOTIFICATION_TOPIC_ARN')
+    message = f"Automated Malware Protection has detected malware in the file '{object_key}'. \n\nThis file has NOT been transferred, The user has been notified. This alert is to the Analytical Platform Team."
+    sns_client.publish(
+        TopicArn=topic_arn,
+        Subject="🚨 Malware Detection Alert",
+        Message=message
+    )
 
-# def process_access_denied(bucket_name, object_key):
-#     logger.info(f"Processing access denied for file: {object_key} in bucket: {bucket_name}")
 
-#     # TODO: Implement your specific logic for access denied scenarios
-#     # Example: Notify security team, update permissions, log to security dashboard
+def process_access_denied(bucket_name, object_key):
 
-#     # Placeholder for your implementation
-#     logger.info("Access denied processing completed")
+    # Email Analytical Platform Team via SNS
+    # TODO this should be AP_NOTIFICATION_TOPIC_ARN not NOTIFICATION_TOPIC_ARN
+    topic_arn = os.environ.get('NOTIFICATION_TOPIC_ARN')
+    message = (
+        f"The Malware Protection for S3 scan process on file {object_key} has failed due to an 'Access Denied' error. "
+        "The user has not been informed, please investigate this at the first opportunity."
+    )
+    sns_client.publish(
+        TopicArn=topic_arn,
+        Subject="🚨 Analytical Platform Ingestion: Access Denied Alert",
+        Message=message
+    )
 
-# def process_failed_scan(bucket_name, object_key):
-#     """
-#     Process a case where the scan failed for reasons other than access or file type
 
-#     This function handles scan failures which might require investigation.
-#     """
-#     logger.info(f"Processing failed scan for file: {object_key} in bucket: {bucket_name}")
+def process_failed_scan(bucket_name, object_key):
 
-#     # TODO: Implement your specific logic for failed scans
-#     # Example: Retry scanning, notify administrators, move to error bucket
+    # Email user via SNS
+    topic_arn = os.environ.get('NOTIFICATION_TOPIC_ARN')
+    message = (
+        f"The Malware Protection for S3 scan process on file {object_key} has failed. \n\n"
+        "Please retry by uploading your file again. \n\n"
+        "This file has NOT been transferred. If failure persists please contact us via Support: \n"
+        "https://github.com/ministryofjustice/data-platform-support/issues \n\n"
+        "Many thanks, Analytical Platform Team."
+    )
+    sns_client.publish(
+        TopicArn=topic_arn,
+        Subject="🚨 Analytical Platform Ingestion: Failed Malware Scan Alert",
+        Message=message
+    )
 
-#     # Placeholder for your implementation
-#     logger.info("Failed scan processing completed")
 
-# def process_unsupported_file(bucket_name, object_key):
-#     """
-#     Process a case where the file type is not supported by the scanner
+def process_unsupported_file(bucket_name, object_key):
 
-#     This function handles unsupported file types which cannot be scanned.
-#     """
-#     logger.info(f"Processing unsupported file: {object_key} in bucket: {bucket_name}")
-
-#     # TODO: Implement your specific logic for unsupported files
-#     # Example: Tag as unscannable, move to separate bucket, notify users
-
-#     # Placeholder for your implementation
-#     logger.info("Unsupported file processing completed")
+    # Email user via SNS
+    topic_arn = os.environ.get('NOTIFICATION_TOPIC_ARN')
+    message = (
+        "This file type is not supported and cannot be scanned. \n\n"
+        "This file has NOT been transferred."
+        "If you believe this file type is supported please contact us via Support: \n"
+        "https://github.com/ministryofjustice/data-platform-support/issues \n\n"
+        "Many thanks, Analytical Platform Team."
+    )
+    sns_client.publish(
+        TopicArn=topic_arn,
+        Subject="🚨 Analytical Platform Ingestion: Unsupported File Alert",
+        Message=message
+    )
