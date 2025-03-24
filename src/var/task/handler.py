@@ -1,8 +1,9 @@
 import json
-import boto3
+import logging
 import os
 from datetime import datetime
-import logging
+
+import boto3
 
 # Setup logging
 logger = logging.getLogger()
