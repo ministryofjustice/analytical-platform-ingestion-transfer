@@ -80,7 +80,7 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
                 logger.warning(f"Unknown scan result status: {scan_result_status}")
         elif scan_status == "SKIPPED":
             if scan_result_status == "ACCESS_DENIED":
-                process_access_denied(bucket_name, object_key)
+                process_access_denied(object_key)
                 return {
                     "statusCode": 403,
                     "body": json.dumps(
@@ -88,7 +88,7 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
                     ),
                 }
             if scan_result_status == "UNSUPPORTED":
-                process_unsupported_file(bucket_name, object_key)
+                process_unsupported_file(object_key)
                 return {
                     "statusCode": 415,
                     "body": json.dumps(
@@ -96,7 +96,7 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
                     ),
                 }
         elif scan_status == "FAILED":
-            process_failed_scan(bucket_name, object_key)
+            process_failed_scan(object_key)
             return {
                 "statusCode": 500,
                 "body": json.dumps(f"Error: Scan failed on file '{object_key}'."),
