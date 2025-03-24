@@ -32,15 +32,15 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
 
     try:
         # Extract the relevant details from the event
-        detail = event.get('detail', {})
-        scan_status = detail.get('scanStatus')
-        scan_result_details = detail.get('scanResultDetails', {})
-        scan_result_status = scan_result_details.get('scanResultStatus')
+        detail = event.get("detail", {})
+        scan_status = detail.get("scanStatus")
+        scan_result_details = detail.get("scanResultDetails", {})
+        scan_result_status = scan_result_details.get("scanResultStatus")
 
         # Extract S3 object details
-        s3_object_details = detail.get('s3ObjectDetails', {})
-        bucket_name = s3_object_details.get('bucketName')
-        object_key = s3_object_details.get('objectKey')
+        s3_object_details = detail.get("s3ObjectDetails", {})
+        bucket_name = s3_object_details.get("bucketName")
+        object_key = s3_object_details.get("objectKey")
 
         # Log the extracted information
         logger.info(f"Scan status: {scan_status}")
@@ -61,19 +61,19 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
             if scan_result_status == "NO_THREATS_FOUND":
                 process_no_threats_found_file(bucket_name, object_key)
                 return {
-                    'statusCode': 200,
-                    'body': json.dumps(
+                    "statusCode": 200,
+                    "body": json.dumps(
                         f"Successfully processed - NO THREATS FOUND in file: {object_key} in bucket: {bucket_name}"
-                    )
+                    ),
                 }
             elif scan_result_status == "THREATS_FOUND":
-                threats = scan_result_details.get('threats', [])
+                threats = scan_result_details.get("threats", [])
                 process_threats_found_file(bucket_name, object_key, threats)
                 return {
-                    'statusCode': 200,
-                    'body': json.dumps(
+                    "statusCode": 200,
+                    "body": json.dumps(
                         f"Successfully processed - THREATS FOUND in file: {object_key} in bucket: {bucket_name}"
-                    )
+                    ),
                 }
             else:
                 logger.warning(f"Unknown scan result status: {scan_result_status}")
@@ -81,27 +81,33 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
             if scan_result_status == "ACCESS_DENIED":
                 process_access_denied(bucket_name, object_key)
                 return {
-                    'statusCode': 403,
-                    'body': json.dumps(f"Error: Access denied to file '{object_key}' in '{bucket_name}'."),
+                    "statusCode": 403,
+                    "body": json.dumps(
+                        f"Error: Access denied to file '{object_key}' in '{bucket_name}'."
+                    ),
                 }
             if scan_result_status == "UNSUPPORTED":
                 process_unsupported_file(bucket_name, object_key)
                 return {
-                    'statusCode': 415,
-                    'body': json.dumps(f"Error: File type is unsupported. Filename: '{object_key}'"),
+                    "statusCode": 415,
+                    "body": json.dumps(
+                        f"Error: File type is unsupported. Filename: '{object_key}'"
+                    ),
                 }
         elif scan_status == "FAILED":
             process_failed_scan(bucket_name, object_key)
             return {
-                'statusCode': 500,
-                'body': json.dumps(f"Error: Scan failed on file '{object_key}'."),
+                "statusCode": 500,
+                "body": json.dumps(f"Error: Scan failed on file '{object_key}'."),
             }
         else:
             logger.warning(f"Unknown scan status: {scan_status}")
 
         return {
-            'statusCode': 200,
-            'body': json.dumps(f"Successfully processed scan status: {scan_status}, result: {scan_result_status}")
+            "statusCode": 200,
+            "body": json.dumps(
+                f"Successfully processed scan status: {scan_status}, result: {scan_result_status}"
+            ),
         }
 
         return response_payload
@@ -109,14 +115,16 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
     except Exception as e:
         logger.error(f"Error processing event: {str(e)}")
         return {
-            'statusCode': 500,
-            'body': json.dumps(f"Error processing event: {str(e)}")
+            "statusCode": 500,
+            "body": json.dumps(f"Error processing event: {str(e)}"),
         }
 
 
 def process_no_threats_found_file(bucket_name, object_key):
 
-    logger.info(f"Processing NO_THREATS_FOUND file: {object_key} in bucket: {bucket_name}")
+    logger.info(
+        f"Processing NO_THREATS_FOUND file: {object_key} in bucket: {bucket_name}"
+    )
 
     if "/" in object_key:
         supplier, uploaded_object = object_key.split("/", 1)
@@ -161,10 +169,7 @@ def process_no_threats_found_file(bucket_name, object_key):
         f"Successfully copied {object_key} to {target_bucket}/{destination_object_key}."
     )
 
-    s3_client.delete_object(
-        Bucket=os.environ["LANDING_BUCKET_NAME"],
-        Key=object_key
-    )
+    s3_client.delete_object(Bucket=os.environ["LANDING_BUCKET_NAME"], Key=object_key)
 
     print(
         f"Successfully deleted {object_key} from {os.environ['LANDING_BUCKET_NAME']}."
@@ -173,20 +178,22 @@ def process_no_threats_found_file(bucket_name, object_key):
 
 def process_threats_found_file(bucket_name, object_key, threats):
 
-    logger.info(f"Processing THREATS_FOUND - file: '{object_key}' in bucket '{bucket_name}'")
+    logger.info(
+        f"Processing THREATS_FOUND - file: '{object_key}' in bucket '{bucket_name}'"
+    )
     logger.info(f"Detected threats: {json.dumps(threats)}")
 
     # Move file to Quarantine bucket, and then delete file.
-    quarantine_bucket = os.environ.get('QUARANTINE_BUCKET')
+    quarantine_bucket = os.environ.get("QUARANTINE_BUCKET")
     s3_client.copy_object(
-        CopySource={'Bucket': bucket_name, 'Key': object_key},
+        CopySource={"Bucket": bucket_name, "Key": object_key},
         Bucket=quarantine_bucket,
-        Key=object_key
+        Key=object_key,
     )
     s3_client.delete_object(Bucket=bucket_name, Key=object_key)
 
     # Email user via SNS
-    topic_arn = os.environ.get('NOTIFICATION_TOPIC_ARN')
+    topic_arn = os.environ.get("NOTIFICATION_TOPIC_ARN")
     message = (
         f"Automated Malware Protection has detected malware in the file '{object_key}'.\n\n"
         "This file has NOT been transferred, please contact us via Support:\n"
@@ -194,18 +201,18 @@ def process_threats_found_file(bucket_name, object_key, threats):
         "Many thanks, Analytical Platform Team."
     )
     sns_client.publish(
-        TopicArn=topic_arn,
-        Subject="🚨 Malware Detection Alert",
-        Message=message
+        TopicArn=topic_arn, Subject="🚨 Malware Detection Alert", Message=message
     )
 
     # Email Analytical Platform Team via SNS
-    topic_arn = os.environ.get('AP_NOTIFICATION_TOPIC_ARN')
-    message = f"Automated Malware Protection has detected malware in the file '{object_key}'. \n\nThis file has NOT been transferred, The user has been notified. This alert is to the Analytical Platform Team."
+    topic_arn = os.environ.get("AP_NOTIFICATION_TOPIC_ARN")
+    message = (
+        f"Automated Malware Protection has detected malware in the file '{object_key}'. \n\n"
+        "This file has NOT been transferred, The user has been notified."
+        "This alert is to the Analytical Platform Team."
+    )
     sns_client.publish(
-        TopicArn=topic_arn,
-        Subject="🚨 Malware Detection Alert",
-        Message=message
+        TopicArn=topic_arn, Subject="🚨 Malware Detection Alert", Message=message
     )
 
 
@@ -213,7 +220,7 @@ def process_access_denied(bucket_name, object_key):
 
     # Email Analytical Platform Team via SNS
     # TODO this should be AP_NOTIFICATION_TOPIC_ARN not NOTIFICATION_TOPIC_ARN
-    topic_arn = os.environ.get('NOTIFICATION_TOPIC_ARN')
+    topic_arn = os.environ.get("NOTIFICATION_TOPIC_ARN")
     message = (
         f"The Malware Protection for S3 scan process on file {object_key} has failed due to an 'Access Denied' error. "
         "The user has not been informed, please investigate this at the first opportunity."
@@ -221,14 +228,14 @@ def process_access_denied(bucket_name, object_key):
     sns_client.publish(
         TopicArn=topic_arn,
         Subject="🚨 Analytical Platform Ingestion: Access Denied Alert",
-        Message=message
+        Message=message,
     )
 
 
 def process_failed_scan(bucket_name, object_key):
 
     # Email user via SNS
-    topic_arn = os.environ.get('NOTIFICATION_TOPIC_ARN')
+    topic_arn = os.environ.get("NOTIFICATION_TOPIC_ARN")
     message = (
         f"The Malware Protection for S3 scan process on file {object_key} has failed. \n\n"
         "Please retry by uploading your file again. \n\n"
@@ -239,14 +246,14 @@ def process_failed_scan(bucket_name, object_key):
     sns_client.publish(
         TopicArn=topic_arn,
         Subject="🚨 Analytical Platform Ingestion: Failed Malware Scan Alert",
-        Message=message
+        Message=message,
     )
 
 
 def process_unsupported_file(bucket_name, object_key):
 
     # Email user via SNS
-    topic_arn = os.environ.get('NOTIFICATION_TOPIC_ARN')
+    topic_arn = os.environ.get("NOTIFICATION_TOPIC_ARN")
     message = (
         "This file type is not supported and cannot be scanned. \n\n"
         "This file has NOT been transferred."
@@ -257,5 +264,5 @@ def process_unsupported_file(bucket_name, object_key):
     sns_client.publish(
         TopicArn=topic_arn,
         Subject="🚨 Analytical Platform Ingestion: Unsupported File Alert",
-        Message=message
+        Message=message,
     )
