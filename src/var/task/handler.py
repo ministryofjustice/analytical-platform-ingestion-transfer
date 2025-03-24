@@ -111,8 +111,6 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
             ),
         }
 
-        return response_payload
-
     except Exception as e:
         logger.error(f"Error processing event: {str(e)}")
         return {
