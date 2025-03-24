@@ -1,8 +1,8 @@
 import json
-import os
-import logging
-from datetime import datetime
 import boto3
+import os
+from datetime import datetime
+import logging
 
 # Setup logging
 logger = logging.getLogger()
@@ -28,7 +28,7 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
     4. When the scan fails (scanStatus: FAILED)
     5. When the file type is unsupported (scanStatus: UNSUPPORTED)
     """
-    logger.info("Received event: %s", json.dumps(event))
+    logger.info(f"Received event: {json.dumps(event)}")
 
     try:
         # Extract the relevant details from the event
@@ -43,10 +43,10 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
         object_key = s3_object_details.get("objectKey")
 
         # Log the extracted information
-        logger.info("Scan status: %s", scan_status)
-        logger.info("Scan result status: %s", scan_result_status)
-        logger.info("Bucket name: %s", bucket_name)
-        logger.info("Object key: %s", object_key)
+        logger.info(f"Scan status: {scan_status}")
+        logger.info(f"Scan result status: {scan_result_status}")
+        logger.info(f"Bucket name: {bucket_name}")
+        logger.info(f"Object key: {object_key}")
 
         # Default response payload
         response_payload = {
@@ -66,8 +66,7 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
                         f"Successfully processed - NO THREATS FOUND in file: {object_key} in bucket: {bucket_name}"
                     ),
                 }
-
-            if scan_result_status == "THREATS_FOUND":
+            elif scan_result_status == "THREATS_FOUND":
                 threats = scan_result_details.get("threats", [])
                 process_threats_found_file(bucket_name, object_key, threats)
                 return {
@@ -76,8 +75,8 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
                         f"Successfully processed - THREATS FOUND in file: {object_key} in bucket: {bucket_name}"
                     ),
                 }
-
-            logger.warning("Unknown scan result status: %s", scan_result_status)
+            else:
+                logger.warning(f"Unknown scan result status: {scan_result_status}")
         elif scan_status == "SKIPPED":
             if scan_result_status == "ACCESS_DENIED":
                 process_access_denied(bucket_name, object_key)
@@ -102,7 +101,7 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
                 "body": json.dumps(f"Error: Scan failed on file '{object_key}'."),
             }
         else:
-            logger.warning("Unknown scan status: %s", scan_status)
+            logger.warning(f"Unknown scan status: {scan_status}")
 
         return {
             "statusCode": 200,
@@ -111,8 +110,10 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
             ),
         }
 
+        return response_payload
+
     except Exception as e:
-        logger.error("Error processing event: %s", str(e))
+        logger.error(f"Error processing event: {str(e)}")
         return {
             "statusCode": 500,
             "body": json.dumps(f"Error processing event: {str(e)}"),
@@ -120,25 +121,23 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
 
 
 def process_no_threats_found_file(bucket_name, object_key):
-    """Process files that have been scanned and no threats were found."""
+
     logger.info(
-        "Processing NO_THREATS_FOUND file: %s in bucket: %s",
-        object_key,
-        bucket_name
+        f"Processing NO_THREATS_FOUND file: {object_key} in bucket: {bucket_name}"
     )
 
     if "/" in object_key:
         supplier, uploaded_object = object_key.split("/", 1)
-        logger.info("Supplier: %s", supplier)
-        logger.info("Object: %s", uploaded_object)
-        logger.info("Object_key: %s", object_key)
+        logger.info(f"Supplier: {supplier}")
+        logger.info(f"Object: {uploaded_object}")
+        logger.info(f"Object_key: {object_key}")
 
     # This section is needed to split out the file name in the case of nested folders
     if "/" in uploaded_object:
         file_name = uploaded_object.split("/")[-1]
     else:
         file_name = uploaded_object
-        logger.info("File name: %s", file_name)
+        logger.info(f"File name: {file_name}")
 
     target_bucket = sm_client.get_secret_value(
         SecretId=f"ingestion/sftp/{supplier}/target-bucket"
@@ -150,7 +149,7 @@ def process_no_threats_found_file(bucket_name, object_key):
     else:
         destination_object_key = object_key
 
-    logger.info("bucket_prefix: %s", bucket_prefix)
+    logger.info(f"bucket_prefix: {bucket_prefix}")
 
     if supplier in ["essex-police"]:
         destination_object_key = (
@@ -178,13 +177,11 @@ def process_no_threats_found_file(bucket_name, object_key):
 
 
 def process_threats_found_file(bucket_name, object_key, threats):
-    """Process files where threats have been detected."""
+
     logger.info(
-        "Processing THREATS_FOUND - file: '%s' in bucket '%s'",
-        object_key,
-        bucket_name
+        f"Processing THREATS_FOUND - file: '{object_key}' in bucket '{bucket_name}'"
     )
-    logger.info("Detected threats: %s", json.dumps(threats))
+    logger.info(f"Detected threats: {json.dumps(threats)}")
 
     # Move file to Quarantine bucket, and then delete file.
     quarantine_bucket = os.environ.get("QUARANTINE_BUCKET")
@@ -220,9 +217,10 @@ def process_threats_found_file(bucket_name, object_key, threats):
 
 
 def process_access_denied(bucket_name, object_key):
-    """Process files where scan access was denied."""
+
     # Email Analytical Platform Team via SNS
-    topic_arn = os.environ.get("AP_NOTIFICATION_TOPIC_ARN")
+    # TODO this should be AP_NOTIFICATION_TOPIC_ARN not NOTIFICATION_TOPIC_ARN
+    topic_arn = os.environ.get("NOTIFICATION_TOPIC_ARN")
     message = (
         f"The Malware Protection for S3 scan process on file {object_key} has failed due to an 'Access Denied' error. "
         "The user has not been informed, please investigate this at the first opportunity."
@@ -235,7 +233,7 @@ def process_access_denied(bucket_name, object_key):
 
 
 def process_failed_scan(bucket_name, object_key):
-    """Process files where scanning failed."""
+
     # Email user via SNS
     topic_arn = os.environ.get("NOTIFICATION_TOPIC_ARN")
     message = (
@@ -253,7 +251,7 @@ def process_failed_scan(bucket_name, object_key):
 
 
 def process_unsupported_file(bucket_name, object_key):
-    """Process files with unsupported file types."""
+
     # Email user via SNS
     topic_arn = os.environ.get("NOTIFICATION_TOPIC_ARN")
     message = (
