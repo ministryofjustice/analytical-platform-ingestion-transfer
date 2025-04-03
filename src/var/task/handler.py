@@ -13,6 +13,7 @@ logger.setLevel(logging.INFO)
 s3_client = boto3.client("s3")
 sm_client = boto3.client("secretsmanager")
 sns_client = boto3.client("sns")
+sts_client = boto3.client('sts')
 
 timestamp = datetime.now().isoformat()
 timestamp_epoch = int(datetime.now().timestamp())
@@ -119,6 +120,20 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
         }
 
 
+def generate_topic_arn(supplier):
+    """
+    Generate an SNS topic ARN in the format:
+    arn:aws:sns:eu-west-2:<AWS-ACCOUNT-ID>:transfer-service-{supplier}
+
+    If supplier is None or empty, return the default notification topic ARN
+    """
+    if supplier:
+        account_id = sts_client.get_caller_identity()['Account']
+        return f"arn:aws:sns:eu-west-2:{account_id}:transfer-service-{supplier}"
+    else:
+        return os.environ.get("NOTIFICATION_TOPIC_ARN")
+
+
 def process_no_threats_found_file(bucket_name, object_key):
 
     logger.info(
@@ -184,15 +199,19 @@ def process_threats_found_file(bucket_name, object_key, threats):
 
     # Move file to Quarantine bucket, and then delete file.
     quarantine_bucket = os.environ.get("QUARANTINE_BUCKET")
-    s3_client.copy_object(
-        CopySource={"Bucket": bucket_name, "Key": object_key},
-        Bucket=quarantine_bucket,
-        Key=object_key,
-    )
-    s3_client.delete_object(Bucket=bucket_name, Key=object_key)
+    # s3_client.copy_object(
+    #     CopySource={"Bucket": bucket_name, "Key": object_key},
+    #     Bucket=quarantine_bucket,
+    #     Key=object_key,
+    # )
+    # s3_client.delete_object(Bucket=bucket_name, Key=object_key)
 
     # Email user via SNS
-    topic_arn = os.environ.get("NOTIFICATION_TOPIC_ARN")
+    supplier = None
+    if "/" in object_key:
+        supplier = object_key.split("/", 1)[0]
+
+    topic_arn = generate_topic_arn(supplier)
     message = (
         f"Automated Malware Protection has detected malware in the file '{object_key}'.\n\n"
         "This file has NOT been transferred, please contact us via Support:\n"
@@ -204,28 +223,27 @@ def process_threats_found_file(bucket_name, object_key, threats):
     )
 
     # Email Analytical Platform Team via SNS
-    topic_arn = os.environ.get("AP_NOTIFICATION_TOPIC_ARN")
+    ap_topic_arn = os.environ.get("AP_NOTIFICATION_TOPIC_ARN")
     message = (
         f"Automated Malware Protection has detected malware in the file '{object_key}'. \n\n"
         "This file has NOT been transferred, The user has been notified."
         "This alert is to the Analytical Platform Team."
     )
     sns_client.publish(
-        TopicArn=topic_arn, Subject="🚨 Malware Detection Alert", Message=message
+        TopicArn=ap_topic_arn, Subject="🚨 Malware Detection Alert", Message=message
     )
 
 
 def process_access_denied(object_key):
 
     # Email Analytical Platform Team via SNS
-    # TODO this should be AP_NOTIFICATION_TOPIC_ARN not NOTIFICATION_TOPIC_ARN
-    topic_arn = os.environ.get("NOTIFICATION_TOPIC_ARN")
+    ap_topic_arn = os.environ.get("AP_NOTIFICATION_TOPIC_ARN")
     message = (
         f"The Malware Protection for S3 scan process on file {object_key} has failed due to an 'Access Denied' error. "
         "The user has not been informed, please investigate this at the first opportunity."
     )
     sns_client.publish(
-        TopicArn=topic_arn,
+        TopicArn=ap_topic_arn,
         Subject="🚨 Analytical Platform Ingestion: Access Denied Alert",
         Message=message,
     )
@@ -233,8 +251,11 @@ def process_access_denied(object_key):
 
 def process_failed_scan(object_key):
 
-    # Email user via SNS
-    topic_arn = os.environ.get("NOTIFICATION_TOPIC_ARN")
+    supplier = None
+    if "/" in object_key:
+        supplier = object_key.split("/", 1)[0]
+
+    topic_arn = generate_topic_arn(supplier)
     message = (
         f"The Malware Protection for S3 scan process on file {object_key} has failed. \n\n"
         "Please retry by uploading your file again. \n\n"
@@ -249,10 +270,15 @@ def process_failed_scan(object_key):
     )
 
 
-def process_unsupported_file():
+def process_unsupported_file(object_key):
 
     # Email user via SNS
-    topic_arn = os.environ.get("NOTIFICATION_TOPIC_ARN")
+    supplier = None
+    if "/" in object_key:
+        supplier = object_key.split("/", 1)[0]
+
+    topic_arn = generate_topic_arn(supplier)
+
     message = (
         "This file type is not supported and cannot be scanned. \n\n"
         "This file has NOT been transferred."
