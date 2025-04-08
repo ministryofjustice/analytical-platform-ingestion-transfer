@@ -19,7 +19,7 @@ timestamp = datetime.now().isoformat()
 timestamp_epoch = int(datetime.now().timestamp())
 
 
-def lambda_handler(event, context):  # pylint: disable=unused-argument
+def handler(event, context):  # pylint: disable=unused-argument
     """
     Lambda function to process GuardDuty Malware Protection scan results
 
@@ -198,13 +198,13 @@ def process_threats_found_file(bucket_name, object_key, threats):
     logger.info(f"Detected threats: {json.dumps(threats)}")
 
     # Move file to Quarantine bucket, and then delete file.
-    quarantine_bucket = os.environ.get("QUARANTINE_BUCKET")
-    # s3_client.copy_object(
-    #     CopySource={"Bucket": bucket_name, "Key": object_key},
-    #     Bucket=quarantine_bucket,
-    #     Key=object_key,
-    # )
-    # s3_client.delete_object(Bucket=bucket_name, Key=object_key)
+    quarantine_bucket = os.environ.get("QUARANTINE_BUCKET_NAME")
+    s3_client.copy_object(
+        CopySource={"Bucket": bucket_name, "Key": object_key},
+        Bucket=quarantine_bucket,
+        Key=object_key,
+    )
+    s3_client.delete_object(Bucket=bucket_name, Key=object_key)
 
     # Email user via SNS
     supplier = None
