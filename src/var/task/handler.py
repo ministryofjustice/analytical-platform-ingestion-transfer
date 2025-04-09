@@ -12,7 +12,6 @@ logger.setLevel(logging.INFO)
 # Setup clients
 s3_client = boto3.client("s3")
 sm_client = boto3.client("secretsmanager")
-sns_client = boto3.client("sns")
 sts_client = boto3.client('sts')
 
 timestamp = datetime.now().isoformat()
@@ -119,21 +118,6 @@ def handler(event, context):  # pylint: disable=unused-argument
             "body": json.dumps(f"Error processing event: {str(e)}"),
         }
 
-
-def generate_topic_arn(supplier):
-    """
-    Generate an SNS topic ARN in the format:
-    arn:aws:sns:eu-west-2:<AWS-ACCOUNT-ID>:transfer-service-{supplier}
-
-    If supplier is None or empty, return the default notification topic ARN
-    """
-    if supplier:
-        account_id = sts_client.get_caller_identity()['Account']
-        return f"arn:aws:sns:eu-west-2:{account_id}:transfer-service-{supplier}"
-    else:
-        return os.environ.get("NOTIFICATION_TOPIC_ARN")
-
-
 def process_no_threats_found_file(bucket_name, object_key):
 
     logger.info(
@@ -206,88 +190,19 @@ def process_threats_found_file(bucket_name, object_key, threats):
     )
     s3_client.delete_object(Bucket=bucket_name, Key=object_key)
 
-    # Email user via SNS
-    supplier = None
-    if "/" in object_key:
-        supplier = object_key.split("/", 1)[0]
-
-    topic_arn = generate_topic_arn(supplier)
-    message = (
-        f"Automated Malware Protection has detected malware in the file '{object_key}'.\n\n"
-        "This file has NOT been transferred, please contact us via Support:\n"
-        "https://github.com/ministryofjustice/data-platform-support/issues\n\n"
-        "Many thanks, Analytical Platform Team."
-    )
-    sns_client.publish(
-        TopicArn=topic_arn, Subject="🚨 Malware Detection Alert", Message=message
-    )
-
-    # Email Analytical Platform Team via SNS
-    ap_topic_arn = os.environ.get("AP_NOTIFICATION_TOPIC_ARN")
-    message = (
-        f"Automated Malware Protection has detected malware in the file '{object_key}'. \n\n"
-        "This file has NOT been transferred, The user has been notified."
-        "This alert is to the Analytical Platform Team."
-    )
-    sns_client.publish(
-        TopicArn=ap_topic_arn, Subject="🚨 Malware Detection Alert", Message=message
-    )
+    # TODO: Send a GOV UK NOTIFY email here
 
 
 def process_access_denied(object_key):
 
-    # Email Analytical Platform Team via SNS
-    ap_topic_arn = os.environ.get("AP_NOTIFICATION_TOPIC_ARN")
-    message = (
-        f"The Malware Protection for S3 scan process on file {object_key} has failed due to an 'Access Denied' error. "
-        "The user has not been informed, please investigate this at the first opportunity."
-    )
-    sns_client.publish(
-        TopicArn=ap_topic_arn,
-        Subject="🚨 Analytical Platform Ingestion: Access Denied Alert",
-        Message=message,
-    )
+    # TODO: Send a GOV UK NOTIFY email here
 
 
 def process_failed_scan(object_key):
 
-    supplier = None
-    if "/" in object_key:
-        supplier = object_key.split("/", 1)[0]
-
-    topic_arn = generate_topic_arn(supplier)
-    message = (
-        f"The Malware Protection for S3 scan process on file {object_key} has failed. \n\n"
-        "Please retry by uploading your file again. \n\n"
-        "This file has NOT been transferred. If failure persists please contact us via Support: \n"
-        "https://github.com/ministryofjustice/data-platform-support/issues \n\n"
-        "Many thanks, Analytical Platform Team."
-    )
-    sns_client.publish(
-        TopicArn=topic_arn,
-        Subject="🚨 Analytical Platform Ingestion: Failed Malware Scan Alert",
-        Message=message,
-    )
+    # TODO: Send a GOV UK NOTIFY email here
 
 
 def process_unsupported_file(object_key):
 
-    # Email user via SNS
-    supplier = None
-    if "/" in object_key:
-        supplier = object_key.split("/", 1)[0]
-
-    topic_arn = generate_topic_arn(supplier)
-
-    message = (
-        "This file type is not supported and cannot be scanned. \n\n"
-        "This file has NOT been transferred."
-        "If you believe this file type is supported please contact us via Support: \n"
-        "https://github.com/ministryofjustice/data-platform-support/issues \n\n"
-        "Many thanks, Analytical Platform Team."
-    )
-    sns_client.publish(
-        TopicArn=topic_arn,
-        Subject="🚨 Analytical Platform Ingestion: Unsupported File Alert",
-        Message=message,
-    )
+    # TODO: Send a GOV UK NOTIFY email here
