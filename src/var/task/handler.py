@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 
 import boto3
+from notifications_python_client.notifications import NotificationsAPIClient
 
 # Setup logging
 logger = logging.getLogger()
@@ -14,8 +15,49 @@ s3_client = boto3.client("s3")
 sm_client = boto3.client("secretsmanager")
 sts_client = boto3.client('sts')
 
+# Setup GOV UK Notify client
+govuk_notify_api_key_secret = os.environ["GOVUK_NOTIFY_API_KEY_SECRET"]
+govuk_notify_api_key = sm_client.get_secret_value(SecretId=govuk_notify_api_key_secret)[
+    "SecretString"
+]
+govuk_notify_templates_secret = os.environ["GOVUK_NOTIFY_TEMPLATES_SECRET"]
+govuk_notify_templates = json.loads(
+    sm_client.get_secret_value(SecretId=govuk_notify_templates_secret)["SecretString"]
+)
+notifications_client = NotificationsAPIClient(govuk_notify_api_key)
+
+# Setup Timestamps
 timestamp = datetime.now().isoformat()
 timestamp_epoch = int(datetime.now().timestamp())
+
+
+def supplier_configuration(supplier):
+    data_contact = sm_client.get_secret_value(
+        SecretId=f"transfer/sftp/{supplier}/data-contact"
+    )["SecretString"]
+
+    technical_contact = sm_client.get_secret_value(
+        SecretId=f"transfer/sftp/{supplier}/technical-contact"
+    )["SecretString"]
+
+    target_bucket = sm_client.get_secret_value(
+        SecretId=f"transfer/sftp/{supplier}/target-bucket"
+    )["SecretString"]
+
+    return {
+        "data_contact": data_contact,
+        "technical_contact": technical_contact,
+        "target_bucket": target_bucket,
+    }
+
+
+def send_gov_uk_notify(template, email_address, personalisation):
+    response = notifications_client.send_email_notification(
+        template_id=template,
+        email_address=email_address,
+        personalisation=personalisation,
+    )
+    return response
 
 
 def handler(event, context):  # pylint: disable=unused-argument
@@ -205,4 +247,24 @@ def process_failed_scan(object_key):
 
 def process_unsupported_file(object_key):
 
-    # TODO: Send a GOV UK NOTIFY email here
+     # Extract supplier from the object_key
+    if "/" in object_key:
+        supplier, remaining_path = object_key.split("/", 1)
+        filename = os.path.basename(remaining_path)
+    else:
+        supplier = "unknown"
+
+    # Fetch supplier configuration
+    supplier_config = supplier_configuration(supplier)
+
+    # GOV.UK Notify Technical Contact
+    send_gov_uk_notify(
+        template=govuk_notify_templates[
+            "transfer_services_unsupported"
+        ],
+        email_address=supplier_config["technical_contact"],
+        personalisation={
+            "filename": filename,
+            "supplier": supplier,
+        },
+    )
