@@ -247,7 +247,7 @@ def process_failed_scan(object_key):
 
 def process_unsupported_file(object_key):
 
-     # Extract supplier from the object_key
+    # Extract supplier from the object_key
     if "/" in object_key:
         supplier, remaining_path = object_key.split("/", 1)
         filename = os.path.basename(remaining_path)
