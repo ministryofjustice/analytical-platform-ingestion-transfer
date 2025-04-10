@@ -262,7 +262,7 @@ def process_unsupported_file(object_key):
     # GOV.UK Notify Technical Contact
     send_gov_uk_notify(
         template=govuk_notify_templates[
-            "transfer_services_unsupported"
+            "transfer_service_unsupported"
         ],
         email_address=supplier_config["technical_contact"],
         personalisation={
