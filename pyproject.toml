@@ -3,5 +3,6 @@ max-line-length = 120
 disable = """
     import-error,
     missing-function-docstring,
-    missing-module-docstring
+    missing-module-docstring,
+    logging-fstring-interpolation
 """
