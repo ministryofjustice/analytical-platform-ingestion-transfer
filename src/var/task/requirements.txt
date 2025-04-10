@@ -1,2 +1,3 @@
-boto3==1.37.15
-botocore==1.37.15
+boto3==1.37.22
+botocore==1.37.22
+notifications-python-client==10.0.1
