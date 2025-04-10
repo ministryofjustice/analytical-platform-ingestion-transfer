@@ -160,6 +160,7 @@ def handler(event, context):  # pylint: disable=unused-argument
             "body": json.dumps(f"Error processing event: {str(e)}"),
         }
 
+
 def process_no_threats_found_file(bucket_name, object_key):
 
     logger.info(
@@ -236,18 +237,20 @@ def process_threats_found_file(bucket_name, object_key, threats):
 
 
 def process_access_denied(object_key):
-
-    # TODO: Send a GOV UK NOTIFY email here
+    logger.info(
+        f"Processing ACCESS_DENIED - file: '{object_key}'"
+    )
+# TODO: Send a GOV UK NOTIFY email here
 
 
 def process_failed_scan(object_key):
-
-    # TODO: Send a GOV UK NOTIFY email here
+    logger.info(
+        f"Processing FAILED - file: '{object_key}'"
+    )
+# TODO: Send a GOV UK NOTIFY email here
 
 
 def process_unsupported_file(object_key):
-
-    # Extract supplier from the object_key
     if "/" in object_key:
         supplier, remaining_path = object_key.split("/", 1)
         filename = os.path.basename(remaining_path)
