@@ -253,7 +253,6 @@ def process_failed_scan(object_key):
 def process_unsupported_file(object_key):
     if "/" in object_key:
         supplier, remaining_path = object_key.split("/", 1)
-        filename = os.path.basename(remaining_path)
     else:
         supplier = "unknown"
 
@@ -267,7 +266,7 @@ def process_unsupported_file(object_key):
         ],
         email_address=supplier_config["technical_contact"],
         personalisation={
-            "filename": filename,
+            "filename": object_key,
             "supplier": supplier,
         },
     )
