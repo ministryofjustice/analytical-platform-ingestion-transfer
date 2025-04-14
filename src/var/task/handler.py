@@ -233,7 +233,25 @@ def process_threats_found_file(bucket_name, object_key, threats):
     )
     s3_client.delete_object(Bucket=bucket_name, Key=object_key)
 
-    # TODO: Send a GOV UK NOTIFY email here
+    if "/" in object_key:
+        supplier, filename = object_key.split("/", 1)
+    else:
+        supplier = "unknown"
+
+    # Fetch supplier configuration
+    supplier_config = supplier_configuration(supplier)
+
+    # GOV.UK Notify Technical Contact
+    send_gov_uk_notify(
+        template=govuk_notify_templates[
+            "transfer_service_threats_found"
+        ],
+        email_address=supplier_config["technical_contact"],
+        personalisation={
+            "filename": filename,
+            "supplier": supplier,
+        },
+    )
 
 
 def process_access_denied(object_key):
