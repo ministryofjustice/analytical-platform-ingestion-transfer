@@ -237,11 +237,25 @@ def process_threats_found_file(bucket_name, object_key, threats):
 
 
 def process_access_denied(object_key):
-    logger.info(
-        f"Processing ACCESS_DENIED - file: '{object_key}'"
-    )
-# TODO: Send a GOV UK NOTIFY email here
+    if "/" in object_key:
+        supplier, remaining_path = object_key.split("/", 1)
+    else:
+        supplier = "unknown"
 
+    # Fetch supplier configuration
+    supplier_config = supplier_configuration(supplier)
+
+    # GOV.UK Notify Technical Contact
+    send_gov_uk_notify(
+        template=govuk_notify_templates[
+            "transfer_service_access_denied"
+        ],
+        email_address=supplier_config["technical_contact"],
+        personalisation={
+            "filename": object_key,
+            "supplier": supplier,
+        },
+    )
 
 def process_failed_scan(object_key):
     if "/" in object_key:
