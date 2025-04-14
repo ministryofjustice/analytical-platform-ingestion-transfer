@@ -238,7 +238,7 @@ def process_threats_found_file(bucket_name, object_key, threats):
 
 def process_access_denied(object_key):
     if "/" in object_key:
-        supplier, remaining_path = object_key.split("/", 1)
+        supplier, filename = object_key.split("/", 1)
     else:
         supplier = "unknown"
 
@@ -252,14 +252,15 @@ def process_access_denied(object_key):
         ],
         email_address=supplier_config["technical_contact"],
         personalisation={
-            "object_key": object_key,
+            "filename": filename,
             "supplier": supplier,
         },
     )
 
+
 def process_failed_scan(object_key):
     if "/" in object_key:
-        supplier, remaining_path = object_key.split("/", 1)
+        supplier, filename = object_key.split("/", 1)
     else:
         supplier = "unknown"
 
@@ -273,7 +274,7 @@ def process_failed_scan(object_key):
         ],
         email_address=supplier_config["technical_contact"],
         personalisation={
-            "object_key": object_key,
+            "filename": filename,
             "supplier": supplier,
         },
     )
@@ -281,7 +282,7 @@ def process_failed_scan(object_key):
 
 def process_unsupported_file(object_key):
     if "/" in object_key:
-        supplier, remaining_path = object_key.split("/", 1)
+        supplier, filename = object_key.split("/", 1)
     else:
         supplier = "unknown"
 
