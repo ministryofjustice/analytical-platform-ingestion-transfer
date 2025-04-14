@@ -293,5 +293,6 @@ def process_unsupported_file(object_key):
         template=govuk_notify_templates[
             "transfer_service_unsupported"
         ],
-        email_address=supplier_config["technical_contact"]
+        email_address=supplier_config["technical_contact"],
+        personalisation={},
     )
