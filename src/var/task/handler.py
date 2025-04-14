@@ -252,7 +252,7 @@ def process_access_denied(object_key):
         ],
         email_address=supplier_config["technical_contact"],
         personalisation={
-            "filename": object_key,
+            "object_key": object_key,
             "supplier": supplier,
         },
     )
@@ -273,7 +273,7 @@ def process_failed_scan(object_key):
         ],
         email_address=supplier_config["technical_contact"],
         personalisation={
-            "filename": object_key,
+            "object_key": object_key,
             "supplier": supplier,
         },
     )
@@ -293,9 +293,5 @@ def process_unsupported_file(object_key):
         template=govuk_notify_templates[
             "transfer_service_unsupported"
         ],
-        email_address=supplier_config["technical_contact"],
-        personalisation={
-            "filename": object_key,
-            "supplier": supplier,
-        },
+        email_address=supplier_config["technical_contact"]
     )
