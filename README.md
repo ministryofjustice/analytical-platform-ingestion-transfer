@@ -30,8 +30,8 @@ Launch a Bash terminal in the container:
 Generally Dependabot does this, but the following command will return the digest:
 
 ```bash
-docker pull --platform linux/amd64 public.ecr.aws/lambda/python:3.12
-docker image inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/lambda/python:3.12
+docker pull --platform linux/amd64 public.ecr.aws/lambda/python:3.13
+docker image inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/lambda/python:3.13
 ```
 
 ## Maintenance
