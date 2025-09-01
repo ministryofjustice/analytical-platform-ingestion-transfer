@@ -51,7 +51,7 @@ jobs:
         id: sign
         shell: bash
         run: |
-          cosign sign --yes 374269020027.dkr.ecr.eu-west-2.amazonaws.com/analytical-platform-ingestion-transfer@${STEPS_BUILD_AND_PUSH_OUTPUTS_DIGEST}
+          cosign sign --yes "374269020027.dkr.ecr.eu-west-2.amazonaws.com/analytical-platform-ingestion-transfer@${STEPS_BUILD_AND_PUSH_OUTPUTS_DIGEST}""
         env:
           STEPS_BUILD_AND_PUSH_OUTPUTS_DIGEST: ${{ steps.build_and_push.outputs.digest }}
 
@@ -61,6 +61,7 @@ jobs:
           cosign verify \
             --certificate-oidc-issuer=https://token.actions.githubusercontent.com \
             --certificate-identity=https://github.com/ministryofjustice/analytical-platform-ingestion-transfer/.github/workflows/release.yml@refs/tags/${GITHUB_REF_NAME} \
-            374269020027.dkr.ecr.eu-west-2.amazonaws.com/analytical-platform-ingestion-transfer@${STEPS_BUILD_AND_PUSH_OUTPUTS_DIGEST}
+            "374269020027.dkr.ecr.eu-west-2.amazonaws.com/analytical-platform-ingestion-transfer@${STEPS_BUILD_AND_PUSH_OUTPUTS_DIGEST}""
         env:
           STEPS_BUILD_AND_PUSH_OUTPUTS_DIGEST: ${{ steps.build_and_push.outputs.digest }}
+
