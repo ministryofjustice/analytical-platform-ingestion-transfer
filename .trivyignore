@@ -1,0 +1,5 @@
+# dockerfile
+# USER not required - A non-root user is used by AWS Lambda
+AVD-DS-0002
+# HEALTHCHECK not required - AWS Lambda does not support HEALTHCHECK
+AVD-DS-0026
