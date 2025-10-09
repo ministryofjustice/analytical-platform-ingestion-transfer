@@ -28,7 +28,7 @@ def handler(event, context):  # pylint: disable=unused-argument
 
     if "/" in target_bucket:
         target_bucket, bucket_prefix = target_bucket.split("/", 1)
-        destination_object_key = f"{bucket_prefix}/{file_name}"
+        destination_object_key = f"{bucket_prefix}/{uploaded_object}"
     else:
         destination_object_key = object_key
 
