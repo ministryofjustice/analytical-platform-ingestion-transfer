@@ -22,5 +22,5 @@ jobs:
       super-linter-variables: |
         {
           "LINTER_RULES_PATH": "/",
-          "PYTHON_PYLINT_CONFIG_FILE": "pyproject.toml",
+          "PYTHON_PYLINT_CONFIG_FILE": "pyproject.toml"
         }
