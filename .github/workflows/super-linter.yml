@@ -1,37 +1,26 @@
 ---
-name: Super-Linter
+name: 🦝 Super Linter
 
 on:
   pull_request:
     branches:
       - main
-    types:
-      - edited
-      - opened
-      - reopened
-      - synchronize
 
 permissions: {}
 
 jobs:
   super-linter:
-    name: Super-Linter
-    runs-on: ubuntu-latest
+    name: Super Linter
     permissions:
       contents: read
+      packages: read
       statuses: write
-    steps:
-      - name: Checkout
-        id: checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Run Super-Linter
-        id: super_linter
-        uses: super-linter/super-linter/slim@ffde3b2b33b745cb612d787f669ef9442b1339a6 # v8.1.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          LINTER_RULES_PATH: /
-          PYTHON_PYLINT_CONFIG_FILE: pyproject.toml
+    uses: ministryofjustice/analytical-platform-github-actions/.github/workflows/reusable-super-linter.yml@68ce2de03822a2ca9c6976e558331cd362271155 # v5.1.0
+    with:
+      # VALIDATE_KUBERNETES_KUBECONFORM is set to false as it cannot process Helm charts
+      # VALIDATE_PYTHON_* are set to false as we need to revisit the Python from a linting perspective
+      super-linter-variables: |
+        {
+          "LINTER_RULES_PATH": "/",
+          "PYTHON_PYLINT_CONFIG_FILE": "pyproject.toml"
+        }
