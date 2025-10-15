@@ -21,6 +21,6 @@ jobs:
       # VALIDATE_PYTHON_* are set to false as we need to revisit the Python from a linting perspective
       super-linter-variables: |
         {
-          "LINTER_RULES_PATH": /,
-          "PYTHON_PYLINT_CONFIG_FILE": pyproject.toml,
+          "LINTER_RULES_PATH": "/",
+          "PYTHON_PYLINT_CONFIG_FILE": "pyproject.toml",
         }
