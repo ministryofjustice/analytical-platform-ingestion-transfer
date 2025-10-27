@@ -3,7 +3,7 @@
     "image": "ghcr.io/ministryofjustice/devcontainer-base:latest",
     "features": {
       "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-      "ghcr.io/devcontainers/features/python:1": {
+      "ghcr.io/devcontainers/features/python:": {
         "version": "3.12",
         "installTools": false
       },
