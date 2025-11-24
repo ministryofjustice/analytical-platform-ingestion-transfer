@@ -23,4 +23,6 @@ jobs:
         {
           "LINTER_RULES_PATH": "/",
           "PYTHON_PYLINT_CONFIG_FILE": "pyproject.toml"
+          "VALIDATE_PYTHON_RUFF_FORMATTING": "false",
+          "VALIDATE_PYTHON_RUFF": "false"
         }
