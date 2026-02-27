@@ -10,6 +10,10 @@ LABEL org.opencontainers.image.vendor="Ministry of Justice" \
 
 COPY --chown=nobody:nobody --chmod=0755 src/var/task/ ${LAMBDA_TASK_ROOT}
 
+# Remove aws-lambda-rie (local emulator only, not used in Lambda execution)
+# to avoid CVE-2025-68121 in its embedded Go stdlib until upstream base image is patched
+RUN rm -f /usr/local/bin/aws-lambda-rie
+
 RUN python -m pip install --no-cache-dir --upgrade pip==24.0 \
     && python -m pip install --no-cache-dir --requirement requirements.txt
 
