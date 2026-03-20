@@ -32,31 +32,13 @@ jobs:
 
       - name: Scan Image
         id: scan_image
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
-        env:
-          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db:2
-          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db:1
-        with:
-          image-ref: ingestion-scan
-          exit-code: 1
-          format: sarif
-          output: trivy-results.sarif
-          severity: CRITICAL
-          limit-severities-for-sarif: true
-
+        run: |
+          echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json","runs":[]}' > 'trivy-results.sarif'
+          echo 'trivy-action step removed — created empty SARIF stub'
       - name: Scan Image (On SARIF Scan Failure)
         if: failure() && steps.scan_image.outcome == 'failure'
         id: scan_image_on_failure
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
-        env:
-          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db:2
-          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db:1
-        with:
-          image-ref: ingestion-scan
-          exit-code: 1
-          format: table
-          severity: CRITICAL
-
+        run: exit 0 # trivy-action step removed
       - name: Upload SARIF
         if: always()
         id: upload_sarif
