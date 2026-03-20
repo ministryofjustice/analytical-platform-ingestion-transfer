@@ -40,6 +40,7 @@ jobs:
         if: failure() && steps.scan_image.outcome == 'failure'
         id: scan_image_on_failure
         run: exit 0 # trivy-action step removed
+
       - name: Upload SARIF
         if: always()
         id: upload_sarif
