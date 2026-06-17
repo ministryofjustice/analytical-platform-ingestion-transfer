@@ -1,0 +1,9 @@
+---
+# Grype configuration file for container vulnerability scanning
+# https://oss.anchore.com/docs/reference/grype/configuration/
+
+ignore:
+  - vulnerability: CVE-2026-7210
+  # Patched upstream, awaiting base image update - see README on how to check for updates.
+  - vulnerability: ALAS2023-2026-1798
+  # Patched upstream, awaiting base image update - see README on how to check for updates.
