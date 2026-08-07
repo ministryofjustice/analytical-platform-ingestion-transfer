@@ -3,7 +3,20 @@
 # https://oss.anchore.com/docs/reference/grype/configuration/
 
 ignore:
+  # Upstream base image advisories (public.ecr.aws/lambda/python).
+  # Review and remove when bumping the pinned base image digest.
   - vulnerability: CVE-2026-7210
-  # Patched upstream, awaiting base image update - see README on how to check for updates.
   - vulnerability: ALAS2023-2026-1798
-  # Patched upstream, awaiting base image update - see README on how to check for updates.
+  - vulnerability: ALAS2023-2026-2035
+  - vulnerability: ALAS2023-2026-2028
+  - vulnerability: ALAS2023-2026-1992
+
+  # Runtime advisories tied to components shipped by the Lambda base image.
+  # These are not directly patched in this repository.
+  # Python CVEs require a Lambda base runtime uplift beyond Python 3.13.
+  - vulnerability: CVE-2026-11940
+  - vulnerability: CVE-2026-15308
+  - vulnerability: CVE-2026-11972
+  # aws-lambda-rie binary is shipped by the Lambda base image; fix pending upstream refresh.
+  - vulnerability: GO-2026-5775
+  - vulnerability: GO-2026-5777
