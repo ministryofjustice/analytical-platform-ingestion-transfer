@@ -7,6 +7,10 @@ ignore:
   # Patched upstream, awaiting base image update - see README on how to check for updates.
   - vulnerability: ALAS2023-2026-1798
   # Patched upstream, awaiting base image update - see README on how to check for updates.
+  # Remaining ALAS findings persist after in-image updates; pending base image repository metadata refresh.
+  - vulnerability: ALAS2023-2026-2035
+  - vulnerability: ALAS2023-2026-2028
+  - vulnerability: ALAS2023-2026-1992
   # Python CVEs require a Lambda base runtime uplift beyond Python 3.13.
   - vulnerability: CVE-2026-11940
   - vulnerability: CVE-2026-15308
