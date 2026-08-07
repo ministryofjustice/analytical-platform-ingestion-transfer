@@ -7,3 +7,10 @@ ignore:
   # Patched upstream, awaiting base image update - see README on how to check for updates.
   - vulnerability: ALAS2023-2026-1798
   # Patched upstream, awaiting base image update - see README on how to check for updates.
+  # Python CVEs require a Lambda base runtime uplift beyond Python 3.13.
+  - vulnerability: CVE-2026-11940
+  - vulnerability: CVE-2026-15308
+  - vulnerability: CVE-2026-11972
+  # aws-lambda-rie binary is shipped by the Lambda base image; fix pending upstream refresh.
+  - vulnerability: GO-2026-5775
+  - vulnerability: GO-2026-5777
