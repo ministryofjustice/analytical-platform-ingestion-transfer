@@ -5,7 +5,7 @@ set -euo pipefail
 sudo apt-get update
 
 # Install agent package manager dependencies.
-apm install
+apm install --frozen
 
 # Upgrade Pip
 pip install --upgrade pip
