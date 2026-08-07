@@ -41,27 +41,27 @@ Always read current values from source files before updating.
 
 2. Update the base image digest.
 
-- Read the base image reference (`<image>:<tag>`) from the `FROM` line in `Dockerfile`.
-- Pull that exact image for `linux/amd64`.
+   - Read the base image reference (`<image>:<tag>`) from the `FROM` line in `Dockerfile`.
+   - Pull that exact image for `linux/amd64`.
 
    ```bash
    IMAGE="$(grep -oP '(?<=^FROM )[^@[:space:]]+' Dockerfile)"
    docker pull --platform linux/amd64 "$IMAGE"
    ```
 
-- Retrieve the current repository digest.
+   - Retrieve the current repository digest.
 
    ```bash
    docker image inspect --format='{{ index .RepoDigests 0 }}' "$IMAGE"
    ```
 
-- Update the `@sha256:...` digest in `Dockerfile`, keeping image repository and tag unchanged.
+   - Update the `@sha256:...` digest in `Dockerfile`, keeping image repository and tag unchanged.
 
 3. Update pinned Python dependencies.
 
-- Read pinned packages from `src/var/task/requirements.txt`.
-- Update versions to the latest compatible values while preserving the same package names.
-- Keep all dependencies pinned with explicit versions.
+   - Read pinned packages from `src/var/task/requirements.txt`.
+   - Update versions to the latest compatible values while preserving the same package names.
+   - Keep all dependencies pinned with explicit versions.
 
 4. Review `Dockerfile` and `src/var/task/requirements.txt` to confirm package names and image tag are unchanged (only digest and versions may differ).
 
@@ -71,16 +71,16 @@ Always read current values from source files before updating.
 
 7. Push the branch and open the pull request with GitHub CLI.
 
-- The `git commit`, `git push`, and `gh` steps need local Git/GitHub credentials and network access.
-- Set an explicit PR title: a Conventional Commit `build:` summary matching the commit.
-- Write PR description to a temporary file and pass it with `--body-file`.
+   - The `git commit`, `git push`, and `gh` steps need local Git/GitHub credentials and network access.
+   - Set an explicit PR title: a Conventional Commit `build:` summary matching the commit.
+   - Write PR description to a temporary file and pass it with `--body-file`.
 
    ```bash
    git push -u origin <branch>
    gh pr create --base main --head <branch> --title "<title>" --body-file <body-file>
    ```
 
-- Report the URL of the created pull request.
+   - Report the URL of the created pull request.
 
 ## Guardrails
 
