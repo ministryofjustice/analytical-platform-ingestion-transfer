@@ -9,7 +9,7 @@ LABEL org.opencontainers.image.authors="Analytical Platform (analytical-platform
 
 COPY --chown=nobody:nobody --chmod=0755 src/var/task/ ${LAMBDA_TASK_ROOT}
 
-RUN python -m pip install --no-cache-dir --upgrade pip==26.2.1 \
+RUN python -m pip install --no-cache-dir --upgrade pip==26.2.2 \
     && python -m pip install --no-cache-dir --requirement requirements.txt
 
 CMD ["handler.handler"]
