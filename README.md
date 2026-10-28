@@ -36,4 +36,6 @@ docker image inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/lambda/p
 
 ## Maintenance
 
+This repository includes a Copilot prompt for maintenance in [`.github/prompts/`](.github/prompts/). To run it, open Copilot Chat in Visual Studio Code and type `/maintenance`. The prompt updates the Lambda base image digest and pinned Python dependency versions and prepares a single pull request.
+
 Maintenance of this component is scheduled in this [workflow](https://github.com/ministryofjustice/analytical-platform/blob/main/.github/workflows/schedule-issue-ingestion.yml), which generates a maintenance ticket as per this [example](https://github.com/ministryofjustice/analytical-platform/issues/5902).
