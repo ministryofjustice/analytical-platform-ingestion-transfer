@@ -5,7 +5,7 @@ commandTests:
   - name: "pip"
     command: "pip"
     args: ["--version"]
-    expectedOutput: ["pip 26.2.1"]
+    expectedOutput: ["pip 26.2.2"]
 
 fileExistenceTests:
   - name: "handler.py"
