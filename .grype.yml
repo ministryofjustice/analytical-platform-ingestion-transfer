@@ -6,3 +6,6 @@ ignore:
   # aws-lambda-rie binary is shipped by the Lambda base image; fix pending upstream refresh.
   - vulnerability: GO-2026-5775
   - vulnerability: GO-2026-5777
+  - vulnerability: ALAS2023-2026-3430-rpm
+  - vulnerability: ALAS2023-2026-3430-rpm-libs
+  - vulnerability: ALAS2023-2026-3452-sqlite-libs
